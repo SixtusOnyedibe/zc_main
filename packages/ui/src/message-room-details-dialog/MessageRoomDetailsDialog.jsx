@@ -12,6 +12,7 @@ import AddMemberModal from "./components/AddMemberModal";
 import RemoveMemberModal from "./components/RemoveMemberModal";
 import DeleteChannel from "./components/DeleteChannel";
 import ArchiveChannel from "./components/ArchiveChannel";
+import PrivateChannel from "./components/PrivateChannel";
 import { RiDeleteBinLine, RiDeleteBin7Fill } from "react-icons/ri";
 import {
   AiOutlineUserAdd,
@@ -24,9 +25,15 @@ import { BsPersonCircle } from "react-icons/bs";
 import { ListGroup } from "react-bootstrap";
 
 import axios from "axios";
-import { StyledTabs } from "./MessageRoomDetailsDialog.styled";
+import { StyledTabs, ErrorModal } from "./MessageRoomDetailsDialog.styled";
 import { getSampleMemberList } from "~/utils/samples";
 import FileList from "./components/FileList";
+
+// getting edited topic from local storage
+const getEditedTopicFromLS = () => {
+  let editedTopics = localStorage.getItem("editedTopic");
+  return editedTopics ? JSON.parse(editedTopics) : "";
+};
 
 function MessageRoomDetailsDialog({
   close,
@@ -36,14 +43,15 @@ function MessageRoomDetailsDialog({
   channelName
 }) {
   const [showEditTopicModal, setShowEditTopicModal] = useState(false);
+  const [addTopic, setAddTopic] = useState(getEditedTopicFromLS());
   const [activeIndex, setActiveIndex] = useState(0);
   const [showEditDescriptionModal, setEditDescriptionModal] = useState(false);
   const [showLeaveChannelModal, setShowLeaveChannelModal] = useState(false);
   const [showDeleteChannel, setShowDeleteChannel] = useState(false);
   const [showArchiveChannel, setShowArchiveChannel] = useState(false);
-
+  const [showPrivateChannel, setShowPrivateChannel] = useState(false);
   const toggleEditTopicModal = () => {
-    setShowEditTopicModal(true);
+    setShowEditTopicModal(!showEditTopicModal);
   };
   const toggleEditDescriptionModal = () =>
     setEditDescriptionModal(!showEditDescriptionModal);
@@ -51,9 +59,51 @@ function MessageRoomDetailsDialog({
   const toggleLeaveChannelModal = () =>
     setShowLeaveChannelModal(!showLeaveChannelModal);
   const toggleArchiveChannel = () => setShowArchiveChannel(!showArchiveChannel);
+  const togglePrivateChannel = () => setShowPrivateChannel(prev => !prev);
+
+  const [description, setDescription] = useState("");
+  const [roomData, setRoomData] = useState(null);
+  const [errorModal, setErrorModal] = useState("");
+
+  const handleDescriptionUpdate = update => {
+    setDescription(update.description);
+  };
+
+  useEffect(() => {
+    let isFetched = true;
+
+    const org_id = localStorage.getItem("currentWorkspace");
+    const room_id = sessionStorage.getItem("currentRoom");
+
+    const fetchData = async () => {
+      await axios
+        .get(`https://chat.zuri.chat/api/v1/org/${org_id}/rooms/${room_id}`)
+        .then(res => {
+          setRoomData(res.data);
+          setDescription(res.data.data.description);
+        })
+        .catch(e => {
+          setErrorModal("Could not fetch description");
+        });
+    };
+
+    if (isFetched) {
+      fetchData();
+    }
+
+    const timer = setTimeout(() => {
+      setErrorModal("");
+    }, [4000]);
+
+    return () => {
+      isFetched = false;
+      clearTimeout(timer);
+    };
+  }, []);
 
   return (
     <div className="App">
+      {errorModal && <ErrorModal>{errorModal}</ErrorModal>}
       <DialogOverlays isOpen={showDialog} onDismiss={close}>
         <DialogContents style={{ padding: "1rem 2rem" }}>
           <StyledTabs
@@ -84,6 +134,7 @@ function MessageRoomDetailsDialog({
             <TabPanels>
               <TabPanel>
                 <AboutPanel
+                  addTopic={addTopic}
                   showEditModal={showEditTopicModal}
                   toggleEditTopicModal={() => {
                     setShowEditTopicModal(true);
@@ -91,6 +142,7 @@ function MessageRoomDetailsDialog({
                   toggleEditDescriptionModal={toggleEditDescriptionModal}
                   toggleLeaveChannelModal={toggleLeaveChannelModal}
                   closeModal={close}
+                  channelDescription={description}
                 />
               </TabPanel>
               <TabPanel>
@@ -103,26 +155,45 @@ function MessageRoomDetailsDialog({
                 <SettingPanel
                   toggleDeleteChannel={toggleDeleteChannel}
                   toggleArchiveChannel={toggleArchiveChannel}
+                  togglePrivateChannel={togglePrivateChannel}
                   closeModal={close}
                 />
               </TabPanel>
             </TabPanels>
           </StyledTabs>
+          {showEditDescriptionModal && (
+            <EditDescriptionModal
+              closeEdit={toggleEditDescriptionModal}
+              roomData={roomData}
+              handleDescriptionUpdate={handleDescriptionUpdate}
+              description={description}
+            />
+          )}
+
+          {showEditTopicModal && (
+            <EditTopicModal
+              addTopic={addTopic}
+              setAddTopic={setAddTopic}
+              closeEdit={toggleEditTopicModal}
+            />
+          )}
+          {showLeaveChannelModal && (
+            <LeaveChannelModal
+              closeEdit={toggleLeaveChannelModal}
+              closeAll={close}
+            />
+          )}
+          {showDeleteChannel && (
+            <DeleteChannel closeEdit={toggleDeleteChannel} />
+          )}
+          {showPrivateChannel && (
+            <PrivateChannel closeEdit={togglePrivateChannel} />
+          )}
+          {showArchiveChannel && (
+            <ArchiveChannel closeEdit={toggleArchiveChannel} />
+          )}
         </DialogContents>
       </DialogOverlays>
-      {showEditTopicModal && (
-        <EditTopicModal closeEdit={toggleEditTopicModal} />
-      )}
-      {showEditDescriptionModal && (
-        <EditDescriptionModal closeEdit={toggleEditDescriptionModal} />
-      )}
-      {showLeaveChannelModal && (
-        <LeaveChannelModal closeEdit={toggleLeaveChannelModal} />
-      )}
-      {showDeleteChannel && <DeleteChannel closeEdit={toggleDeleteChannel} />}
-      {showArchiveChannel && (
-        <ArchiveChannel closeEdit={toggleArchiveChannel} />
-      )}
     </div>
   );
 }
@@ -131,9 +202,12 @@ function AboutPanel({
   closeModal,
   toggleEditTopicModal,
   toggleEditDescriptionModal,
-  toggleLeaveChannelModal
+  toggleLeaveChannelModal,
+  channelDescription,
+  addTopic
 }) {
   const [showMore, setShowMore] = useState(false);
+
   return (
     <div style={{ margin: "0 5px" }}>
       <OverallWrapper>
@@ -149,7 +223,9 @@ function AboutPanel({
               Edit
             </EditLabel>
           </Topic>
-          <Input type="text" placeholder="Add a topic" />
+          <EditContent>
+            {addTopic !== "" ? addTopic : "Add a Topic"}
+          </EditContent>
         </EachSegment>
         <EachSegment>
           <Description>
@@ -164,7 +240,9 @@ function AboutPanel({
               Edit
             </EditLabel>
           </Description>
-          <EditContent>Add description.</EditContent>
+          <EditContent>
+            {channelDescription ? channelDescription : "Add description."}
+          </EditContent>
         </EachSegment>
         <EachSegment>
           <Label>Created By</Label>
@@ -213,10 +291,12 @@ function AboutPanel({
 //         {...props}/>
 //       )
 //   }
-function MembersPanel({ config }) {
+
+export function MembersPanel({ config }) {
   const dummyHeaderConfig = {
     roomInfo: {
       membersList: getSampleMemberList(),
+
       addmembersevent: values => {
         console.warn("a plugin added ", values);
       },
@@ -240,7 +320,10 @@ function MembersPanel({ config }) {
   const [selectedMember, setSelectedMember] = useState(null);
   const [isLoading, setisLoading] = useState(false);
   const [userList, setUserList] = useState([]);
+  const [searchList, setSearchList] = useState([]);
+  const [memberData, setMemberData] = useState([]);
   const [membersList, setMembersList] = useState(roomMembers);
+  const [isSearching, setIsSearching] = useState(false);
 
   const handleClose = () => {
     setaddModalShow(false);
@@ -260,6 +343,43 @@ function MembersPanel({ config }) {
   };
 
   const removeMemberEvent = id => {
+    // const payload = Object.fromEntries(
+    //   Object.entries(userList).filter((users) => users.value !== id)
+    // );
+
+    // console.log(payload)
+
+    console.log(id);
+
+    setUserList(
+      userList.filter(users => {
+        return users.value !== id;
+      })
+    );
+
+    const theUserData = JSON.parse(localStorage.getItem("userData"));
+
+    const theOrganizarionId = theUserData.user.org_id;
+
+    const theAdminId = theUserData.user._id;
+
+    //to get the current room , which we have in the session storage
+
+    let ourCurrentRoom = sessionStorage.getItem("currentRoom");
+
+    console.log(ourCurrentRoom);
+
+    const token = sessionStorage.getItem("token");
+
+    axios.patch(
+      `https://chat.zuri.chat/api/v1/org/${theOrganizarionId}/rooms/${ourCurrentRoom}/members/${id}?admin_id=${theAdminId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json"
+        }
+      }
+    );
     removememberevent(id);
   };
 
@@ -281,26 +401,59 @@ function MembersPanel({ config }) {
           return { value: item._id, label: item.email };
         });
         const channelUserIds = membersList.map(member => member._id);
-
-        // check to see if the user is already in a channel
-        const checkedUsers = users.map(user => {
-          if (channelUserIds.includes(user.value)) {
-            return {
-              ...user,
-              label: `${user.label} (Already in this channel)`,
-              isDisabled: true
-            };
-          }
-          return user;
-        });
-        setUserList(checkedUsers);
+        setMemberData(r.data.data);
+        setUserList(users);
+        // check and ensuring that members of a channel don't show up in the searchList
+        const memberSet = new Set(membersList);
+        const newList = userList.filter(user => !memberSet.has(user));
+        setSearchList(newList);
         setisLoading(false);
       })
       .catch(() => {
         setisLoading(false);
       });
   }, [membersList]);
+  //
+  // Search member filter
+  function customFilter(objList, text) {
+    if (undefined === text || text === "") return objList;
+    return objList.filter(product => {
+      let flag;
+      for (let prop in product) {
+        flag = false;
+        flag = product[prop]?.toString()?.indexOf(text) > -1;
+        if (flag) break;
+      }
+      return flag;
+    });
+  }
+  //
+  // Search Member Event Returning the value
+  const onSearchMember = event => {
+    setIsSearching(true);
+    let query = event.target.value;
+    let searchResult = customFilter(memberData, query);
+    const users = searchResult.map(item => {
+      return { value: item._id, label: item.email };
+    });
+    const channelUserIds = membersList.map(member => member._id);
+    // check to see if the user is already in a channel
+    const checkedUsers = users.map(user => {
+      if (channelUserIds.includes(user.value)) {
+        return {
+          ...user,
+          label: `${user.label} (Already in this channel)`,
+          isDisabled: true
+        };
+      }
+      return user;
+    });
+    setUserList(checkedUsers);
+    setIsSearching(false);
+  };
 
+  //
+  //
   return (
     <div>
       <AddMemberModal
@@ -309,7 +462,7 @@ function MembersPanel({ config }) {
         handleShow={handleaddModalShow}
         handleClose={handleClose}
         addMembersEvent={addMembersEvent}
-        userList={userList}
+        searchList={searchList}
       />
 
       {selectedMember && (
@@ -331,7 +484,11 @@ function MembersPanel({ config }) {
                 marginLeft: "10px"
               }}
             />
-            <MembersInput type="text" placeholder="Find members" />
+            <MembersInput
+              type="text"
+              onChange={() => onSearchMember(event)}
+              placeholder="Find members"
+            />
           </Selection>
         </ListGroup.Item>
         <ListGroup.Item>
@@ -342,21 +499,30 @@ function MembersPanel({ config }) {
             Add People
           </AddPeopleIcons>
         </ListGroup.Item>
-        {membersList && membersList.length > 0 ? (
-          membersList.map((member, index) => (
-            <ListGroup.Item key={member._id + index} className="d-flex w-100">
-              <div>{member.email}</div>
-              <div className="ms-auto" onClick={handleaddModalShow}>
-                <RemoveLink onClick={() => removeMemberHandler(member)}>
-                  Remove
-                </RemoveLink>
-              </div>
-            </ListGroup.Item>
-          ))
+        {isSearching ? (
+          <h1>Loading...</h1>
         ) : (
-          <ListGroup.Item className="d-flex w-100">
-            <div>No Members</div>
-          </ListGroup.Item>
+          <>
+            {userList && userList.length > 0 ? (
+              userList.map((member1, index) => (
+                <ListGroup.Item
+                  key={member1.value + index}
+                  className="d-flex w-100"
+                >
+                  <div>{member1.label}</div>
+                  <div className="ms-auto" onClick={handleremoveModalShow}>
+                    <RemoveLink onClick={() => removeMemberHandler(member1)}>
+                      Remove
+                    </RemoveLink>
+                  </div>
+                </ListGroup.Item>
+              ))
+            ) : (
+              <ListGroup.Item className="d-flex w-100">
+                <div>No Members</div>
+              </ListGroup.Item>
+            )}
+          </>
         )}
       </ListGroup>
     </div>
@@ -404,6 +570,7 @@ function SettingPanel({
   closeModal,
   toggleDeleteChannel,
   toggleArchiveChannel,
+  togglePrivateChannel,
   channelName
 }) {
   return (
@@ -415,7 +582,13 @@ function SettingPanel({
       <ChannelWrapper>
         <Channels>
           <AiOutlineLock />
-          <ChannelContent>Change to Private Channel</ChannelContent>
+          <ChannelContent
+            onClick={() => {
+              togglePrivateChannel();
+            }}
+          >
+            Change to Private Channel
+          </ChannelContent>
         </Channels>
       </ChannelWrapper>
       <ChannelWrapper>

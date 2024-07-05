@@ -8,12 +8,15 @@ import ResetPassword from "./pages/ResetPassword";
 import Workspace from "./pages/Workspace";
 import UserOrganizationsListing from "./components/UserOrganizationsListing";
 import TopBarModal from "./components/TopBarModal";
+import Preferences from "./components/Preferences";
+import EditWorkspace from "./components/EditWorkspace";
 
 import Subscribe from "./pages/Subscribe";
 import whyzurichat from "./pages/whyzurichat";
 import Cookies from "./pages/Cookies";
 import ContactUs from "./pages/ContactUs";
 import Plugins from "./pages/Plugins";
+import Profile from "./pages/Profile";
 import ModalComponent from "./components/ModalComponent";
 
 import DownloadDesktop from "./pages/DownloadDesktop";
@@ -23,14 +26,32 @@ import DownloadIos from "./pages/DownloadIos";
 import DownloadWindows from "./pages/DownloadWindows";
 
 import Pricing from "./pages/Pricing";
+import PrivacyPage from "./pages/PrivacyPolicy";
 
 import Footer from "./components/Footer";
+import FAQ from "./components/FAQ";
 import NavBar from "./components/NavBar";
 import WorkspaceChat from "./pages/WorkspaceChat";
 import SideBar from "./components/SideBar";
 import Download from "./pages/Download";
 import DownloadDesktopSectionTwo from "./pages/DownloadDesktopSectionTwo";
 import DownloadMobileSectionTwo from "./pages/DownloadMobileSectionTwo";
+import ProfileMore from "./pages/ProfileMore";
+import EditProfile from "./components/EditProfile";
+import Help from "./pages/Help";
+import Legal from "./pages/Legal";
+import MainComponents from "./pages/MainComponents";
+
+import SettingsHome from "./pages/SettingsHome";
+import ErrorPage from "./pages/ErrorPage";
+import WorkspaceLanguage from "./components/WorkspaceLanguage";
+import Username from "./components/Username";
+import TwoFactor from "./components/TwoFactor";
+import SettingsTab from "./components/SettingsTab";
+import SavePassword from "./components/SavePassword";
+import Table from "./components/Table";
+import RetentionAndExports from "./components/RetentionAndExports";
+import ManageWorkspace from "./pages/ManageWorkspace";
 
 const resources = {};
 
@@ -51,7 +72,9 @@ const Translations = [
   ...Download,
   ...Workspace,
   ...UserOrganizationsListing,
+  ...Profile,
   ...TopBarModal,
+  ...EditWorkspace,
 
   ...DownloadDesktop,
   ...DownloadMobile,
@@ -59,16 +82,38 @@ const Translations = [
   ...DownloadIos,
   ...DownloadWindows,
   ...ModalComponent,
+  ...Help,
+  ...Legal,
 
   ...Pricing,
+  ...PrivacyPage,
   ...DownloadDesktopSectionTwo,
   ...DownloadMobileSectionTwo,
+  ...ProfileMore,
+
+  ...SettingsHome,
+  ...ErrorPage,
+  ...ManageWorkspace,
 
   // Components
   ...NavBar,
   ...Footer,
   ...WorkspaceChat,
-  ...SideBar
+  ...MainComponents,
+
+  ...FAQ,
+
+  ...SideBar,
+  ...Preferences,
+  ...EditProfile,
+
+  ...WorkspaceLanguage,
+  ...Username,
+  ...TwoFactor,
+  ...SettingsTab,
+  ...SavePassword,
+  ...Table,
+  ...RetentionAndExports
 ];
 
 Translations.forEach(o => {

@@ -65,7 +65,11 @@ export default function Index() {
         );
 
         if (userData.userWorkspaces.length) {
-          history.push("/choose-workspace");
+          const lastLocation = window.localStorage.getItem("lastLocation");
+          const redirectPath = lastLocation
+            ? lastLocation
+            : "/choose-workspace";
+          history.push(redirectPath);
         } else {
           history.push("/create-workspace");
         }
@@ -95,8 +99,11 @@ export default function Index() {
 
       <section id={styles.authFormContainer}>
         <AuthFormWrapper
-          header={t("logInheader")}
-          googleHeader={t("google_header")}
+          header={t("LogInheader")}
+          subHeader={t(
+            "Login with the data you entered during your registration."
+          )}
+          googleHeader={t("Login with Google")}
           topLineText={t("topline_text")}
           submitButtonName={t("LoginsubmitButtonName")}
           disabled={!(email && password)}
@@ -148,6 +155,7 @@ export default function Index() {
               >
                 {t("forgotPassword")}
               </Link>
+              <span>Get help siging in</span>
             </div>
           </div>
         </AuthFormWrapper>

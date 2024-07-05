@@ -85,6 +85,7 @@ export default function Homepage() {
       </div>
     );
   };
+
   return (
     <>
       <TopNavigationBar />

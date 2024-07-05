@@ -1,11 +1,16 @@
 import { DateTime } from "luxon";
 import avatar from "@assets/profile.svg";
 import RichTextRenderer from "~/rich-text-renderer/RichTextRenderer";
+import styles from "../../message-pane.module.css";
 
 export default function MessageBox({ message }) {
+  const isImage = url => {
+    const allowedExtensions = /(\.jpg|\.jpeg|\.png|\.gif)$/i;
+    return allowedExtensions.exec(url);
+  };
   return (
     <div className="msg-container">
-      <div>
+      <div className="img__wrapper">
         <img
           src={
             message.sender.sender_image_url ||
@@ -33,7 +38,19 @@ export default function MessageBox({ message }) {
             </span>
           </div>
           <div className="message">
-            <RichTextRenderer richUiMessageConfig={message.richUiData} />
+            {Object.keys(message.richUiData).length !== 0 && (
+              <RichTextRenderer richUiMessageConfig={message.richUiData} />
+            )}
+          </div>
+          <div className={styles.fileWrapper}>
+            {message?.files?.map((e, i) => {
+              return (
+                <div key={i}>
+                  {isImage(e) && <img src={e} className={styles.file} />}
+                  {!isImage(e) && <embed src={e} className={styles.file} />}
+                </div>
+              );
+            })}
           </div>
         </div>
       )}

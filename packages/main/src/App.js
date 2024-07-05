@@ -1,32 +1,47 @@
-import { lazily } from "react-lazily";
 import React, { Suspense } from "react";
+import { lazily } from "react-lazily";
 import { BrowserRouter, Redirect, Route, Switch } from "react-router-dom";
 
 // All components imported here
 import { GeneralErrorBoundary, GeneralLoading } from "./components";
+import AccDeactivated from "./components/account-deactivated/AccDeactivated";
+import AcctDeactivation from "./components/account-deactivation/AcctDeactivation";
+import ChangeWorkspaceName from "./components/change-workspace-name/ChangeWorkspaceName";
+import ConfirmDeactivation from "./components/confirm-deactivation/ConfirmDeactivation";
+import ManageMembers from "./components/manage-members/ManageMembers";
+import AllSessionSignOut from "./components/sessions-signout/AllSessionSignOut";
 
 // All utilities imported here
 import { withSuspense } from "./utils";
 
 // All Pages imported here
+import TermsOfService from "../src-old/pages/termsOfService/index";
+import SettingsHome from "../src/pages/protected/settings-home/SettingsHome";
+import { useAuth } from "./auth/use-auth";
+import DeleteWorkspace from "./components/delete-workspace/deleteWorkspace";
 import {
-  HomePage,
-  Login,
-  SignUp,
-  NewSignOut,
   AboutPage,
+  ChangePassword,
   ContactUsPage,
+  DownloadsPage,
+  ErrorPage,
+  HomePage,
+  InvitePage,
+  Login,
+  NewSignOut,
   PluginsPage,
   PricingPage,
-  InvitePage,
+  PrivacyPage,
   ResetPassword,
-  ChangePassword,
-  WhyZuriChat,
-  PrivacyPage
+  SignUp,
+  WhyZuriChat
 } from "./pages";
-
-import TermsOfService from "../src-old/pages/termsOfService/index";
-import { useAuth } from "./auth/use-auth";
+import AboutWorkSpace from "./pages/protected/about-workspace/AboutWorkSpace";
+import AccountProfile from "./pages/protected/account-profile/AccountProfile";
+import Invitation from "./pages/protected/invitations/Invitation";
+import ManageWorkspace from "./pages/protected/manage-workspace/ManageWorkspace";
+import Help from "./pages/static/help";
+import TermsCondition from "./pages/static/legal";
 
 const { Workspace, CreateWorkspace, ChooseWorkspace } = lazily(() =>
   import("./pages/protected")
@@ -82,8 +97,10 @@ const App = () => (
         <Switch>
           {/* <GeneralLoading /> */}
           <Route exact path="/" component={HomePage} />
-          {/* <Route exact path="/signout" component={SignOut} /> */}
           <Route exact path="/about" component={AboutPage} />
+          <Route exact path="/downloads" component={DownloadsPage} />
+          <Route exact path="/help" component={Help} />
+          <Route exact path="/legal" component={TermsCondition} />
           <Route exact path="/contact-us" component={ContactUsPage} />
           <Route exact path="/plugins" component={PluginsPage} />
           <Route exact path="/pricing" component={PricingPage} />
@@ -103,6 +120,57 @@ const App = () => (
           <ProtectedRoute exact path="/signout">
             <NewSignOut />
           </ProtectedRoute>
+          <ProtectedRoute exact path="/admin/settings">
+            <SettingsHome />
+          </ProtectedRoute>
+          <ProtectedRoute exact path="/admin/settings/accountsProfile">
+            <AccountProfile />
+          </ProtectedRoute>
+          <ProtectedRoute
+            exact
+            path="/admin/settings/accountsProfile/sessions-signout"
+          >
+            <AllSessionSignOut />
+          </ProtectedRoute>
+          <ProtectedRoute
+            exact
+            path="/admin/settings/accountsProfile/account-deactivation"
+          >
+            <AcctDeactivation />
+          </ProtectedRoute>
+          <ProtectedRoute
+            exact
+            path="/admin/settings/accountsProfile/account-deactivation/confirm-deactivate"
+          >
+            <ConfirmDeactivation />
+          </ProtectedRoute>
+          <ProtectedRoute
+            exact
+            path="/admin/settings/accountsProfile/account-deactivation/confirm-deactivate/acct-deactivated"
+          >
+            <AccDeactivated />
+          </ProtectedRoute>
+          <ProtectedRoute exact path="/admin/settings/ManageWorkspace">
+            <ManageWorkspace />
+          </ProtectedRoute>
+          <ProtectedRoute
+            exact
+            path="/admin/settings/ManageWorkspace/ChangeWorkspaceName"
+          >
+            <ChangeWorkspaceName />
+          </ProtectedRoute>
+          <ProtectedRoute exact path="/admin/workspace/delete">
+            <DeleteWorkspace />
+          </ProtectedRoute>
+          <ProtectedRoute exact path="/admin/settings/managemembers">
+            <ManageMembers />
+          </ProtectedRoute>
+          <ProtectedRoute exact path="/admin/settings/invitation">
+            <Invitation />
+          </ProtectedRoute>
+          <ProtectedRoute exact path="/admin/settings/aboutworkspace">
+            <AboutWorkSpace />
+          </ProtectedRoute>
           <ProtectedRoute exact path="/choose-workspace">
             {withSuspense(ChooseWorkspace)}
           </ProtectedRoute>
@@ -112,11 +180,12 @@ const App = () => (
           <ProtectedRoute path="/workspace/:workspaceId">
             {withSuspense(Workspace)}
           </ProtectedRoute>
-          <Route
+          {/* <Route
             component={() => (
               <GeneralLoading text="404 - (Refactoring in Progress)" />
             )}
-          />
+          /> */}
+          <Route path="*" component={ErrorPage} />
         </Switch>
       </Suspense>
     </GeneralErrorBoundary>
